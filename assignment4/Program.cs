@@ -1,50 +1,39 @@
 ﻿using System;
+using System.Threading;
 
-namespace GenericLinkedList
+namespace AlarmClockSimulation
 {
-    // 定义链表节点类
-    public class Node<T>
+    // 定义闹钟类
+    public class AlarmClock
     {
-        public T Data { get; set; }
-        public Node<T> Next { get; set; }
-        public Node(T data)
+        // 定义 Tick 事件
+        public event EventHandler Tick;
+        // 定义 Alarm 事件
+        public event EventHandler Alarm;
+
+        // 触发 Tick 事件
+        protected virtual void OnTick()
         {
-            Data = data;
+            Tick?.Invoke(this, EventArgs.Empty);
         }
-    }
 
-    // 定义泛型链表类
-    public class LinkedList<T> where T : IComparable<T>
-    {
-        private Node<T> head;
-
-        public void Add(T data)
+        // 触发 Alarm 事件
+        protected virtual void OnAlarm()
         {
-            
-            if (head == null)
+            Alarm?.Invoke(this, EventArgs.Empty);
+        }
+
+        // 启动闹钟
+        public void Start(int alarmAfterSeconds)
+        {
+            for (int i = 1; i <= alarmAfterSeconds; i++)
             {
-                head = new Node<T>(data);
-            }
-            
-            else
-            {
-                Node<T> current = head;
-                while (current.Next != null)
+                Thread.Sleep(1000); // 模拟1秒
+                OnTick(); // 触发 Tick 事件
+                if (i == alarmAfterSeconds)
                 {
-                    current = current.Next;
+                    OnAlarm(); // 触发 Alarm 事件
                 }
-                current.Next = new Node<T>(data);
-            }
-        }
-
-        // 实现 ForEach 方法
-        public void ForEach(Action<T> action)
-        {
-            Node<T> current = head;
-            while (current != null)
-            {
-                action(current.Data);
-                current = current.Next;
             }
         }
     }
@@ -53,32 +42,18 @@ namespace GenericLinkedList
     {
         static void Main(string[] args)
         {
-            // 创建链表并添加元素
-            LinkedList<int> list = new LinkedList<int>();
-            list.Add(10);
-            list.Add(20);
-            list.Add(30);
-            list.Add(40);
-            list.Add(50);
+            // 创建闹钟对象
+            AlarmClock clock = new AlarmClock();
 
-            // 打印链表元素
-            Console.WriteLine("链表元素：");
-            list.ForEach(x => Console.WriteLine(x));
+            // 订阅 Tick 事件
+            clock.Tick += (sender, e) => Console.WriteLine("Tick...");
 
-            // 求最大值
-            int max = int.MinValue;
-            list.ForEach(x => { if (x > max) max = x; });
-            Console.WriteLine($"最大值：{max}");
+            // 订阅 Alarm 事件
+            clock.Alarm += (sender, e) => Console.WriteLine("Alarm! Time's up!");
 
-            // 求最小值
-            int min = int.MaxValue;
-            list.ForEach(x => { if (x < min) min = x; });
-            Console.WriteLine($"最小值：{min}");
-
-            // 求和
-            int sum = 0;
-            list.ForEach(x => sum += x);
-            Console.WriteLine($"和：{sum}");
+            // 启动闹钟，5秒后响铃
+            Console.WriteLine("闹钟启动，5秒后响铃...");
+            clock.Start(5);
         }
     }
 }
